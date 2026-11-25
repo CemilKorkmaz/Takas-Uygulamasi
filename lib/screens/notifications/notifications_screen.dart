@@ -88,7 +88,7 @@ class _NotificationTile extends ConsumerWidget {
         NotificationType.offerReceived => CupertinoIcons.tray_arrow_down_fill,
         NotificationType.offerAccepted => CupertinoIcons.check_mark_circled_solid,
         NotificationType.offerRejected => CupertinoIcons.xmark_circle_fill,
-        NotificationType.trackingUpdated => CupertinoIcons.shippingbox_fill,
+        NotificationType.trackingUpdated => CupertinoIcons.cube_box_fill,
         NotificationType.reviewReceived => CupertinoIcons.star_fill,
         NotificationType.system => CupertinoIcons.bell_fill,
       };

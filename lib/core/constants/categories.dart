@@ -143,7 +143,7 @@ class CategoryCatalog {
   static const ItemCategory aksesuar = ItemCategory(
     id: 'aksesuar',
     name: 'Aksesuar',
-    icon: CupertinoIcons.sparkles,
+    icon: CupertinoIcons.tag,
     fields: [
       CategoryField(key: 'tur', label: 'Tür', placeholder: 'Örn. Anahtarlık'),
       CategoryField(key: 'malzeme', label: 'Malzeme', placeholder: 'Örn. Deri, Metal'),
@@ -153,7 +153,7 @@ class CategoryCatalog {
   static const ItemCategory diger = ItemCategory(
     id: 'diger',
     name: 'Diğer',
-    icon: CupertinoIcons.square_stack_3d_up,
+    icon: CupertinoIcons.square_grid_2x2,
     fields: [],
   );
 

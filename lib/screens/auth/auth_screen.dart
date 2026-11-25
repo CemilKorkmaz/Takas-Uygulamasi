@@ -110,8 +110,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         gradient: AppColors.accentGradient,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Icon(CupertinoIcons.arrow_right_arrow_left_circle_fill,
-                          color: CupertinoColors.white, size: 40),
+                      child: const Icon(CupertinoIcons.arrow_right_arrow_left,
+                          color: CupertinoColors.white, size: 36),
                     ),
                     const SizedBox(height: 16),
                     const Text(

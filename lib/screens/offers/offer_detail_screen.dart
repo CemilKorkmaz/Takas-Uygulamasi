@@ -80,7 +80,7 @@ class _OfferDetailScreenState extends ConsumerState<OfferDetailScreen> {
               _itemRow('Teklif Edilen', offer.offeredItemTitle, offer.offeredItemImage, offer.requesterName),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
-                child: Icon(CupertinoIcons.arrow_up_arrow_down, color: AppColors.accent, size: 24),
+                child: Icon(CupertinoIcons.arrow_right_arrow_left, color: AppColors.accent, size: 24),
               ),
               _itemRow('İstenen', offer.requestedItemTitle, offer.requestedItemImage, offer.ownerName),
             ],
@@ -153,7 +153,7 @@ class _OfferDetailScreenState extends ConsumerState<OfferDetailScreen> {
                 const SizedBox(height: 10),
                 GlassButton(
                   label: 'Takip Numarasını Kaydet',
-                  icon: CupertinoIcons.shippingbox,
+                  icon: CupertinoIcons.cube_box,
                   onPressed: _busy
                       ? null
                       : () {
