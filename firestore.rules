@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create: if isOwner(uid);
+      allow update: if signedIn(); // puan güncellemesi için server-side/controlled update önerilir
+    }
+
+    match /items/{itemId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /offers/{offerId} {
+      allow read: if signedIn() && (resource.data.ownerId == request.auth.uid || resource.data.requesterId == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.requesterId == request.auth.uid;
+      allow update: if signedIn() && (resource.data.ownerId == request.auth.uid || resource.data.requesterId == request.auth.uid);
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.reviewerId == request.auth.uid;
+    }
+
+    match /notifications/{notifId} {
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if signedIn();
+      allow update: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
