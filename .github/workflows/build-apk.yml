@@ -45,21 +45,14 @@ jobs:
               if not p.exists():
                   continue
               s = p.read_text()
-              # minSdk
               s = s.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
               s = s.replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 23')
-              # desugaring
               if 'isCoreLibraryDesugaringEnabled' not in s and 'coreLibraryDesugaringEnabled' not in s:
                   if 'compileOptions {' in s:
-                      s = s.replace(
-                          'compileOptions {',
-                          'compileOptions {\n        isCoreLibraryDesugaringEnabled = true',
-                          1
-                      ) if p.suffix == '.kts' else s.replace(
-                          'compileOptions {',
-                          'compileOptions {\n        coreLibraryDesugaringEnabled true',
-                          1
-                      )
+                      if p.suffix == '.kts':
+                          s = s.replace('compileOptions {', 'compileOptions {\n        isCoreLibraryDesugaringEnabled = true', 1)
+                      else:
+                          s = s.replace('compileOptions {', 'compileOptions {\n        coreLibraryDesugaringEnabled true', 1)
               if 'desugar_jdk_libs' not in s:
                   if p.suffix == '.kts':
                       s = re.sub(r'(dependencies\s*\{)', r'\1\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")', s, count=1)
@@ -76,7 +69,23 @@ jobs:
         run: flutter analyze || true
 
       - name: Build debug APK
-        run: flutter build apk --debug
+        id: build
+        run: |
+          set -o pipefail
+          flutter build apk --debug 2>&1 | tee build.log
+        continue-on-error: true
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: warn
+
+      - name: Fail if build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
