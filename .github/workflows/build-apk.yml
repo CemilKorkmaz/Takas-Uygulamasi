@@ -34,16 +34,40 @@ jobs:
             flutter create --platforms=android --project-name takas_uygulamasi --org com.takasuygulamasi .
           fi
 
-      - name: Ensure minSdkVersion 23
+      - name: Patch Android build config
         run: |
-          # Firebase paketleri genelde minSdk 23 ister.
-          if [ -f android/app/build.gradle ]; then
-            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' android/app/build.gradle || true
-            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' android/app/build.gradle.kts || true
-          fi
-          if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' android/app/build.gradle.kts || true
-          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          # minSdk 23 + core library desugaring (flutter_local_notifications vb. için)
+          for p in [Path('android/app/build.gradle.kts'), Path('android/app/build.gradle')]:
+              if not p.exists():
+                  continue
+              s = p.read_text()
+              # minSdk
+              s = s.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
+              s = s.replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 23')
+              # desugaring
+              if 'isCoreLibraryDesugaringEnabled' not in s and 'coreLibraryDesugaringEnabled' not in s:
+                  if 'compileOptions {' in s:
+                      s = s.replace(
+                          'compileOptions {',
+                          'compileOptions {\n        isCoreLibraryDesugaringEnabled = true',
+                          1
+                      ) if p.suffix == '.kts' else s.replace(
+                          'compileOptions {',
+                          'compileOptions {\n        coreLibraryDesugaringEnabled true',
+                          1
+                      )
+              if 'desugar_jdk_libs' not in s:
+                  if p.suffix == '.kts':
+                      s = re.sub(r'(dependencies\s*\{)', r'\1\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")', s, count=1)
+                  else:
+                      s = re.sub(r'(dependencies\s*\{)', r"\1\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'", s, count=1)
+              p.write_text(s)
+              print('patched', p)
+          PY
 
       - name: Install dependencies
         run: flutter pub get
