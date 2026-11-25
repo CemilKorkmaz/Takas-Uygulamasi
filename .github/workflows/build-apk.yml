@@ -46,19 +46,21 @@ jobs:
               if not p.exists():
                   continue
               s = p.read_text()
+              # minSdk 23
               s = s.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
               s = s.replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 23')
+              # core library desugaring enable
               if 'isCoreLibraryDesugaringEnabled' not in s and 'coreLibraryDesugaringEnabled' not in s:
                   if 'compileOptions {' in s:
                       if p.suffix == '.kts':
                           s = s.replace('compileOptions {', 'compileOptions {\n        isCoreLibraryDesugaringEnabled = true', 1)
                       else:
                           s = s.replace('compileOptions {', 'compileOptions {\n        coreLibraryDesugaringEnabled true', 1)
-              if 'desugar_jdk_libs' not in s:
-                  if p.suffix == '.kts':
-                      s = re.sub(r'(dependencies\s*\{)', r'\1\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")', s, count=1)
-                  else:
-                      s = re.sub(r'(dependencies\s*\{)', r"\1\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'", s, count=1)
+              # remove any previous desugar dep lines, then append a clean one at end
+              s = re.sub(r'(?m)^\s*coreLibraryDesugaring\(.*desugar_jdk_libs.*\)\s*\n?', '', s)
+              s = re.sub(r"(?m)^\s*coreLibraryDesugaring\s+['\"]com\.android\.tools:desugar_jdk_libs.*['\"]\s*\n?", '', s)
+              dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' if p.suffix == '.kts' else "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+              s = s.rstrip() + "\n\ndependencies {\n    " + dep + "\n}\n"
               p.write_text(s)
               print('patched', p)
           PY
@@ -90,20 +92,29 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tail -400 build.log > build_tail.log
-          BODY_FILE=release_body.md
           {
             echo "# Build log (son 400 satır)"
             echo
             echo '```'
             cat build_tail.log
             echo '```'
-          } > "$BODY_FILE"
+          } > release_body.md
           gh release delete debug-build-log -y --cleanup-tag || true
-          gh release create debug-build-log --prerelease --title "Debug build log" --notes-file "$BODY_FILE"
+          gh release create debug-build-log --prerelease --title "Debug build log" --notes-file release_body.md
 
       - name: Fail if build failed
         if: steps.build.outcome == 'failure'
         run: exit 1
+
+      - name: Create/Update GitHub Release with APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.0.0-debug"
+          gh release delete "$TAG" -y --cleanup-tag || true
+          gh release create "$TAG" --prerelease --title "Takas Uygulaması Debug APK" \
+            --notes "Firebase yapılandırması yapılmadan üretilmiş debug APK. Firebase özellikleri için flutterfire configure sonrası yeniden build alın." \
+            build/app/outputs/flutter-apk/app-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
