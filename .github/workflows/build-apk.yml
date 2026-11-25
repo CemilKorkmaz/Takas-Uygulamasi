@@ -8,6 +8,8 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -40,7 +42,6 @@ jobs:
           from pathlib import Path
           import re
 
-          # minSdk 23 + core library desugaring (flutter_local_notifications vb. için)
           for p in [Path('android/app/build.gradle.kts'), Path('android/app/build.gradle')]:
               if not p.exists():
                   continue
@@ -82,6 +83,23 @@ jobs:
           name: build-log
           path: build.log
           if-no-files-found: warn
+
+      - name: Publish build log to debug release (on failure)
+        if: steps.build.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tail -400 build.log > build_tail.log
+          BODY_FILE=release_body.md
+          {
+            echo "# Build log (son 400 satır)"
+            echo
+            echo '```'
+            cat build_tail.log
+            echo '```'
+          } > "$BODY_FILE"
+          gh release delete debug-build-log -y --cleanup-tag || true
+          gh release create debug-build-log --prerelease --title "Debug build log" --notes-file "$BODY_FILE"
 
       - name: Fail if build failed
         if: steps.build.outcome == 'failure'
