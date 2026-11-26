@@ -134,6 +134,11 @@ class _OfferDetailScreenState extends ConsumerState<OfferDetailScreen> {
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 ),
                 const SizedBox(height: 14),
+                _timelineStep('Teklif kabul edildi', true),
+                _timelineStep('Sen kargoladın', myTracking != null && myTracking.isNotEmpty),
+                _timelineStep('Karşı taraf kargoladı', otherTracking != null && otherTracking.isNotEmpty),
+                _timelineStep('Takas tamamlandı', offer.status == SwapOfferStatus.completed, isLast: true),
+                const SizedBox(height: 14),
                 _trackingStatus('Senin takip numaran', myTracking),
                 const SizedBox(height: 8),
                 _trackingStatus('Karşı tarafın takip numarası', otherTracking),
@@ -296,6 +301,27 @@ class _OfferDetailScreenState extends ConsumerState<OfferDetailScreen> {
           Expanded(child: Text(value, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14))),
         ],
       ),
+    );
+  }
+
+  Widget _timelineStep(String label, bool done, {bool isLast = false}) {
+    final color = done ? AppColors.success : AppColors.textTertiary;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          children: [
+            Icon(done ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle, size: 18, color: color),
+            if (!isLast)
+              Container(width: 2, height: 18, color: color.withOpacity(0.35)),
+          ],
+        ),
+        const SizedBox(width: 10),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(label, style: TextStyle(color: done ? AppColors.textPrimary : AppColors.textTertiary, fontSize: 13, fontWeight: done ? FontWeight.w600 : FontWeight.w400)),
+        ),
+      ],
     );
   }
 
