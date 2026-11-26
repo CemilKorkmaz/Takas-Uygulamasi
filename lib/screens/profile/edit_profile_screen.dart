@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/constants/cities.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass.dart';
 import '../../providers/providers.dart';
@@ -137,7 +138,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               children: [
                 _field(_nameCtrl, 'Ad Soyad', 'Adını yaz'),
                 const SizedBox(height: 12),
-                _field(_cityCtrl, 'Şehir', 'Örn. İstanbul'),
+                _cityPickerField(),
                 const SizedBox(height: 12),
                 _field(_bioCtrl, 'Hakkımda', 'Kendinden ve takas tercihlerinden bahset', maxLines: 4),
               ],
@@ -150,6 +151,107 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             onPressed: _saving ? null : _save,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _cityPickerField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Şehir', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: _showCityPicker,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0x1AFFFFFF),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0x33FFFFFF)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _cityCtrl.text.isEmpty ? 'Şehir seç' : _cityCtrl.text,
+                    style: TextStyle(
+                      color: _cityCtrl.text.isEmpty ? AppColors.textTertiary : AppColors.textPrimary,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                const Icon(CupertinoIcons.chevron_down, size: 16, color: AppColors.textTertiary),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCityPicker() {
+    var query = '';
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          final results = Cities.search(query);
+          return Container(
+            height: MediaQuery.of(ctx).size.height * 0.7,
+            decoration: const BoxDecoration(
+              color: Color(0xFF171C2E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              children: [
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0x55FFFFFF), borderRadius: BorderRadius.circular(4))),
+                const SizedBox(height: 16),
+                const Text('Şehir Seç', style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                CupertinoSearchTextField(
+                  placeholder: 'Şehir ara',
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  backgroundColor: const Color(0x1AFFFFFF),
+                  onChanged: (v) => setModalState(() => query = v),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: results.length,
+                    itemBuilder: (_, i) {
+                      final city = results[i];
+                      final selected = city == _cityCtrl.text;
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() => _cityCtrl.text = city);
+                          Navigator.pop(ctx);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          decoration: const BoxDecoration(
+                            border: Border(bottom: BorderSide(color: Color(0x1AFFFFFF))),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(city, style: TextStyle(color: selected ? AppColors.accent : AppColors.textPrimary, fontSize: 16, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
+                              ),
+                              if (selected) const Icon(CupertinoIcons.check_mark, color: AppColors.accent, size: 18),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
